@@ -26,3 +26,4 @@ packages/*/.env.local
 .DS_Store
 .idea/
 .vscode/
+/generated/prisma

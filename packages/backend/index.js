@@ -1,20 +1,36 @@
-// Import the Express library
 import express from 'express';
+// Import the 'db' instance from our new db.js file
+import { db } from './db.js';
 
-// Initialize the Express application
 const app = express();
-
-// Define the port the server will run on.
-// It's good practice to use an environment variable for the port.
 const PORT = process.env.PORT || 3001;
 
-// Define a basic "health check" route
-// This will respond to GET requests at the /api/status URL
+// Health check route
 app.get('/api/status', (req, res) => {
   res.json({ status: 'ok', message: 'Backend is running' });
 });
 
-// Start the server and make it listen for incoming connections on the specified port
+// New route to test the database connection
+app.get('/api/users-test', async (req, res) => {
+  try {
+    // Use the imported 'db' client here
+    const userCount = await db.user.count();
+    res.json({
+      status: 'ok',
+      message: 'Database connection successful!',
+      data: {
+        userCount: userCount,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Database connection failed.',
+      error: error.message,
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
