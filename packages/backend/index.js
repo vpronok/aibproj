@@ -1,38 +1,46 @@
+// File: aibproj/packages/backend/index.js
+
+// THIS IS THE MOST IMPORTANT STEP.
+// The validated 'env' object MUST be imported before anything else.
+
 import { env } from './config/env.js';
-//above has to be the first import
 import express from 'express';
-// Import the 'db' instance from our new db.js file
+// 1. Import the shared database client
 import { db } from './db.js';
 
-const app = express();
-const PORT = process.env.PORT || 3001;
+import { createWebsite } from './controllers/websitesController.js';
 
-// Health check route
+const app = express();
+const PORT = env.PORT;
+app.use(express.json());
+
+console.log('--- BACKEND SCRIPT STARTING (WITH DB) ---');
+
+// --- YOUR ROUTES ---
 app.get('/api/status', (req, res) => {
-  res.json({ status: 'ok', message: 'Backend is running' });
+  res.status(200).json({ message: 'Backend is alive!' });
 });
 
-// New route to test the database connection
+// 2. Add the new database test route
 app.get('/api/users-test', async (req, res) => {
   try {
-    // Use the imported 'db' client here
     const userCount = await db.user.count();
-    res.json({
-      status: 'ok',
+    res.status(200).json({
       message: 'Database connection successful!',
-      data: {
-        userCount: userCount,
-      },
+      userCount: userCount,
     });
   } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: 'Database connection failed.',
-      error: error.message,
-    });
+    console.error('Database test failed:', error);
+    res.status(500).json({ message: 'Database connection failed.' });
   }
 });
 
+app.post('/api/websites', createWebsite);
+// app.post('/api/websites', (req, res) => {
+//   res.status(200).json({ message: 'POST /api/websites is working.' });
+// });
+
+// --- SERVER LISTENER ---
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Backend server is running on http://localhost:${PORT}`);
 });

@@ -2,66 +2,31 @@
 import dotenv from 'dotenv';
 import { z } from 'zod';
 
-console.log('--- Loading and validating environment variables... ---');
-
-// Load environment variables from .env file
+// This command reads the .env file and loads its variables
 dotenv.config();
 
-// Define a schema for the environment variables
+// We define a "schema" that our environment MUST follow
 const envSchema = z.object({
+  // We expect a DATABASE_URL that is a string and a valid URL
   DATABASE_URL: z.string().url(),
+  // We expect a PORT that can be converted to a number, defaulting to 3001
   PORT: z.coerce.number().default(3001),
+  //add plesk url below this line
+  PLESK_API_URL: z.string().url(),
 });
 
-// Validate process.env against the schema
+// We try to validate the actual environment variables against our schema
 const parsedEnv = envSchema.safeParse(process.env);
 
+// If validation fails, we log a detailed error and stop the application
 if (!parsedEnv.success) {
   console.error(
     '❌ Invalid environment variables:',
     parsedEnv.error.flatten().fieldErrors,
   );
-  throw new Error('Invalid environment variables.');
+  // This is a hard exit to prevent running with bad config
+  process.exit(1);
 }
-console.log('--- Environment variables validated successfully! ---');
 
-// Export the validated and typed environment variables
+// If validation succeeds, we export the clean, typed data for our app to use
 export const env = parsedEnv.data;
-// Import the validated 'env' object AT THE VERY TOP
-//import { env } from './config/env.js';
-
-import express from 'express';
-//import { db } from './db.js';
-
-const app = express();
-// Use the validated PORT from our env object
-const PORT = env.PORT;
-
-// Health check route
-app.get('/api/status', (req, res) => {
-  res.json({ status: 'ok', message: 'Backend is running' });
-});
-
-// (No changes needed in this route, it uses the db client which is already configured)
-app.get('/api/users-test', async (req, res) => {
-  try {
-    const userCount = await db.user.count();
-    res.json({
-      status: 'ok',
-      message: 'Database connection successful!',
-      data: {
-        userCount: userCount,
-      },
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: 'Database connection failed.',
-      error: error.message,
-    });
-  }
-});
-
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
