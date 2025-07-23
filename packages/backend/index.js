@@ -1,3 +1,5 @@
+import { env } from './config/env.js';
+//above has to be the first import
 import express from 'express';
 // Import the 'db' instance from our new db.js file
 import { db } from './db.js';
